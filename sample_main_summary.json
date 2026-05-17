@@ -1,0 +1,13 @@
+{
+  "tool_name": "check_stack",
+  "version": "2.2.0",
+  "status": "ALL_OK",
+  "exit_code": 0,
+  "ok": 12,
+  "fail": 0,
+  "fail_items": [],
+  "warnings": [],
+  "checks_run": ["process", "ports", "config", "env", "http"],
+  "next_action": "none",
+  "recommended_actions": []
+}

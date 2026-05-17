@@ -1,0 +1,169 @@
+{
+  "meta": {
+    "tool_name": "check_stack",
+    "version": "2.1.0",
+    "run_at": "2026-04-29T19:00:52Z",
+    "hostname": "CY",
+    "platform": "Linux",
+    "windows_user": "Administrator",
+    "cwd": "/home/cy/northstar-tools"
+  },
+  "process": {
+    "name": "hermes",
+    "running": true,
+    "method": "hermes gateway status",
+    "detail": "✓ Gateway is running (PID: 3067)\n  (Running manually, not as a system service)\n\nWSL note:\n  The gateway is running in fo"
+  },
+  "ports": [
+    {
+      "port": 18642,
+      "status": "listening",
+      "detail": "LISTEN 0      128           0.0.0.0:18642      0.0.0.0:*    users:((\"hermes\",pid=3067,fd=17))"
+    },
+    {
+      "port": 18648,
+      "status": "listening",
+      "detail": "LISTEN 0      128           0.0.0.0:18648      0.0.0.0:*    users:((\"hermes\",pid=562,fd=17))"
+    },
+    {
+      "port": 8644,
+      "status": "reachable",
+      "detail": "TCP connect to 127.0.0.1:8644 succeeded (WSL->Windows?)"
+    },
+    {
+      "port": 18789,
+      "status": "reachable",
+      "detail": "TCP connect to 127.0.0.1:18789 succeeded (WSL->Windows?)"
+    },
+    {
+      "port": 22,
+      "status": "not available",
+      "detail": "port 22 not available"
+    },
+    {
+      "port": 443,
+      "status": "not available",
+      "detail": "port 443 not available"
+    },
+    {
+      "port": 3000,
+      "status": "listening",
+      "detail": "LISTEN 0      4096                *:3000             *:*"
+    },
+    {
+      "port": 5000,
+      "status": "not available",
+      "detail": "port 5000 not available"
+    },
+    {
+      "port": 8000,
+      "status": "not available",
+      "detail": "port 8000 not available"
+    },
+    {
+      "port": 8080,
+      "status": "not available",
+      "detail": "port 8080 not available"
+    },
+    {
+      "port": 8443,
+      "status": "not available",
+      "detail": "port 8443 not available"
+    }
+  ],
+  "config_files": {
+    "openclaw": {
+      "exists": true,
+      "checked_count": 24,
+      "found": [
+        "/mnt/c/Users/Administrator/.openclaw/config.yaml",
+        "/mnt/c/Users/Administrator/.openclaw/config.json",
+        "/mnt/c/Users/Administrator/.openclaw/openclaw.json"
+      ],
+      "content": [
+        {
+          "file": "/mnt/c/Users/Administrator/.openclaw/config.yaml",
+          "keys_found": [],
+          "keys_missing": [
+            "channels",
+            "bindings"
+          ],
+          "parse_error": null,
+          "warnings": []
+        },
+        {
+          "file": "/mnt/c/Users/Administrator/.openclaw/config.json",
+          "keys_found": [],
+          "keys_missing": [
+            "channels",
+            "bindings",
+            "channels.feishu.accounts"
+          ],
+          "parse_error": null,
+          "warnings": []
+        },
+        {
+          "file": "/mnt/c/Users/Administrator/.openclaw/openclaw.json",
+          "keys_found": [
+            "channels",
+            "bindings",
+            "channels.feishu.accounts"
+          ],
+          "keys_missing": [],
+          "parse_error": null,
+          "warnings": []
+        }
+      ]
+    }
+  },
+  "env_vars": {
+    "required": [
+      {
+        "name": "ANTHROPIC_BASE_URL",
+        "set": true,
+        "display": "https://api.deepseek.com/anthropic"
+      },
+      {
+        "name": "ANTHROPIC_MODEL",
+        "set": true,
+        "display": "deepseek-v4-pro[1m]"
+      },
+      {
+        "name": "CLAUDE_CODE_SUBAGENT_MODEL",
+        "set": true,
+        "display": "deepseek-v4-flash"
+      }
+    ],
+    "sensitive": [
+      {
+        "name": "ANTHROPIC_AUTH_TOKEN",
+        "set": true,
+        "display": "已设置"
+      }
+    ]
+  },
+  "http_checks": [
+    {
+      "url": "http://127.0.0.1:18642/health",
+      "success": true,
+      "status_code": 200,
+      "time_ms": 27,
+      "error": null
+    }
+  ],
+  "warnings": [],
+  "summary": {
+    "ok": 12,
+    "fail": 0,
+    "total": 12,
+    "status": "ALL_OK",
+    "exit_code": 0,
+    "checks_run": [
+      "process",
+      "ports",
+      "config",
+      "env",
+      "http"
+    ]
+  }
+}

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatGPT Feishu Bridge</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div id="popup-root">
+    <!-- Status Bar -->
+    <div id="status-bar" class="status-idle">
+      <span id="status-dot"></span>
+      <span id="status-text">Ready</span>
+    </div>
+
+    <!-- Prompt Input -->
+    <div id="input-section">
+      <textarea id="prompt-input" rows="3"
+                placeholder="Enter your prompt for ChatGPT..."></textarea>
+    </div>
+
+    <!-- Actions -->
+    <div id="actions">
+      <button id="send-btn" class="btn-primary">Send to ChatGPT</button>
+      <button id="cancel-btn" class="btn-outline hidden">Cancel</button>
+    </div>
+
+    <!-- Response Preview -->
+    <div id="result-section" class="hidden">
+      <div class="result-header">
+        <span class="result-label">Last Response</span>
+        <span class="result-sent">(sent to Feishu)</span>
+      </div>
+      <div id="response-preview"></div>
+    </div>
+
+    <!-- Error Display -->
+    <div id="error-section" class="hidden">
+      <div id="error-message"></div>
+    </div>
+
+    <!-- Footer -->
+    <div id="footer">
+      <label class="toggle-row">
+        <input type="checkbox" id="auto-send-toggle" checked>
+        <span>Auto-send</span>
+      </label>
+      <a href="#" id="settings-link">Settings</a>
+    </div>
+  </div>
+
+  <script src="../lib/config.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

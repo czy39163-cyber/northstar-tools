@@ -1,0 +1,43 @@
+{
+  "check_name": "Composio 集成中间件 — 缺 Key 检测 Dry-Run",
+  "check_version": "1.0.0",
+  "check_time": "2026-05-17T16:55:17.132114",
+  "summary": {
+    "total": 4,
+    "pass": 1,
+    "fail": 3,
+    "blocked": 2
+  },
+  "checks": [
+    {
+      "name": "COMPOSIO_API_KEY 待授权",
+      "status": "FAIL",
+      "detail": "API Key 为空 — 等待 CY 注册 Composio Free tier 账号后填充",
+      "is_blocking": true
+    },
+    {
+      "name": "COMPOSIO_USER_ID 待配置",
+      "status": "FAIL",
+      "detail": "User ID 为空 — 注册账号后自动生成",
+      "is_blocking": true
+    },
+    {
+      "name": "Hermes credentials 目录",
+      "status": "PASS",
+      "detail": "路径不存在（首次安装正常）",
+      "is_blocking": false
+    },
+    {
+      "name": "Composio Python SDK 未安装",
+      "status": "FAIL",
+      "detail": "pip install composio 尚未执行",
+      "is_blocking": false
+    }
+  ],
+  "verdict": "BLOCKED",
+  "blocked_pending_CY_auth": true,
+  "blocked_reasons": [
+    "COMPOSIO_API_KEY 待授权",
+    "COMPOSIO_USER_ID 待配置"
+  ]
+}

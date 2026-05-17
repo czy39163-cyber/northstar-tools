@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatGPT Feishu Bridge — Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>ChatGPT Feishu Bridge</h1>
+      <p class="subtitle">大龙虾专用 — Browser Extension Settings</p>
+    </header>
+
+    <main>
+      <!-- Section 1: Feishu -->
+      <section class="card">
+        <h2>Feishu Webhook</h2>
+        <p class="desc">Enter the webhook URL from your Feishu custom bot to receive ChatGPT responses.</p>
+
+        <div class="form-group">
+          <label for="feishu-webhook">Webhook URL</label>
+          <input type="url" id="feishu-webhook"
+                 placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxxxxx"
+                 autocomplete="off">
+        </div>
+
+        <div class="form-row">
+          <button id="test-webhook-btn" class="btn btn-outline">Test Webhook</button>
+          <span id="webhook-status" class="status-indicator"></span>
+        </div>
+      </section>
+
+      <!-- Section 2: Behavior -->
+      <section class="card">
+        <h2>Behavior</h2>
+
+        <div class="form-group">
+          <label class="toggle-row">
+            <input type="checkbox" id="auto-send" checked>
+            <span class="toggle-label">Auto-send responses to Feishu</span>
+          </label>
+          <p class="toggle-desc">When enabled, captured ChatGPT responses are automatically forwarded to the configured Feishu webhook. When disabled, responses are shown in the popup only.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="prompt-prefix">Prompt Prefix (optional)</label>
+          <textarea id="prompt-prefix" rows="2"
+                    placeholder="Optional text prepended to every prompt sent to ChatGPT..."></textarea>
+          <span class="hint">This prefix is invisible in the ChatGPT UI. Useful for system-level instructions.</span>
+        </div>
+
+        <div class="form-group">
+          <label for="max-length">Max Response Length (characters)</label>
+          <input type="number" id="max-length" min="1000" max="100000" step="1000" value="50000">
+          <span class="hint">Responses longer than this will be truncated before sending to Feishu.</span>
+        </div>
+      </section>
+
+      <!-- Section 3: Actions -->
+      <section class="card">
+        <h2>Actions</h2>
+        <div class="form-row">
+          <button id="save-btn" class="btn btn-primary">Save Settings</button>
+          <button id="reset-btn" class="btn btn-outline">Reset to Defaults</button>
+        </div>
+        <div id="save-status" class="status-indicator"></div>
+      </section>
+    </main>
+
+    <footer>
+      <p>ChatGPT Feishu Bridge v1.0.0 — Built by BLD/铁甲虾 for 北极星计划</p>
+    </footer>
+  </div>
+
+  <script src="../lib/config.js"></script>
+  <script src="../lib/feishu.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

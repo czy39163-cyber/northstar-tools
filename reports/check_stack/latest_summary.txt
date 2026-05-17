@@ -1,0 +1,51 @@
+check_stack v2.3.2 — HAS_FAILURES
+Health: 35/100 (red)
+Status: HAS_FAILURES | Exit: 1
+Passed: 7/13 | Failures: 6 | Warnings: 19
+Checks: process, ports, env, http, feishu
+Fail items:
+  - [env] ANTHROPIC_BASE_URL: 未设置
+  - [env] ANTHROPIC_MODEL: 未设置
+  - [env] CLAUDE_CODE_SUBAGENT_MODEL: 未设置
+  - [env] ANTHROPIC_AUTH_TOKEN: 未设置
+  - [feishu] feishu.config: config.yaml has no Feishu accounts
+  - [feishu] feishu.config: config.json has no Feishu accounts
+  - [feishu] feishu.config: openclaw.json has no Feishu accounts
+New failures (since last run):
+  - [env] ANTHROPIC_BASE_URL: 未设置
+  - [env] ANTHROPIC_MODEL: 未设置
+  - [env] CLAUDE_CODE_SUBAGENT_MODEL: 未设置
+  - [env] ANTHROPIC_AUTH_TOKEN: 未设置
+  - [feishu] feishu.config: config.yaml has no Feishu accounts
+  - [feishu] feishu.config: config.json has no Feishu accounts
+  - [feishu] feishu.config: openclaw.json has no Feishu accounts
+Warnings:
+  - python-dotenv not available, cannot parse .env files
+  - No Feishu accounts found in OpenClaw config
+  - python-dotenv not available, cannot parse .env files
+  - Failed to expand environment variables in: ${FEISHU_MAIN_APP_ID}
+  - Failed to expand environment variables in: ${FEISHU_OPS_APP_ID}
+  - Failed to expand environment variables in: ${FEISHU_SALES_APP_ID}
+  - No Feishu accounts found in OpenClaw config
+  - python-dotenv not available, cannot parse .env files
+  - Failed to expand environment variables in: ${OPENCLAW_DASHSCOPE_API_KEY}
+  - Failed to expand environment variables in: ${OPENCLAW_DEEPSEEK_API_KEY}
+  - Failed to expand environment variables in: ${OPENCLAW_ERNIE_API_KEY}
+  - Failed to expand environment variables in: ${OPENCLAW_N1N_API_KEY}
+  - Failed to expand environment variables in: ${OPENCLAW_ZHIPU_API_KEY}
+  - Failed to expand environment variables in: ${OPENCLAW_MOONSHOT_API_KEY}
+  - Failed to expand environment variables in: ${FEISHU_FIN_APP_ID}
+  - Failed to expand environment variables in: ${FEISHU_FIN_APP_SECRET}
+  - Failed to expand environment variables in: ${FEISHU_FIN_ENCRYPT_KEY}
+  - Failed to expand environment variables in: ${FEISHU_FIN_VERIFY_TOKEN}
+  - Feishu account list is not a standard array in OpenClaw config
+Trend: 恶化
+Next action: investigate_failures
+Decision hint: 严重：7 项新故障，需立即处理。
+Recommended actions:
+  - Set ANTHROPIC_BASE_URL in your shell profile
+  - Set ANTHROPIC_MODEL in your shell profile
+  - Set CLAUDE_CODE_SUBAGENT_MODEL in your shell profile
+  - Set ANTHROPIC_AUTH_TOKEN in your shell profile
+  - Review OpenClaw Feishu account configuration and bot identity
+  - Review warnings for non-critical issues
