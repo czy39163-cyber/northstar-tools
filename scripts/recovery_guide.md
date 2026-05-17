@@ -28,9 +28,9 @@ cd ~ && git clone https://github.com/nicholasgriffintn/hermes-agent.git
 cd hermes-agent && git checkout <last_known_commit>
 
 # 应用我们的补丁
-cp /mnt/f/Seafile/龙虾备份/hermes_patches_最新/feishu.py ~/hermes-agent/gateway/platforms/
-cp /mnt/f/Seafile/龙虾备份/hermes_patches_最新/weixin.py ~/hermes-agent/gateway/platforms/
-cp /mnt/f/Seafile/龙虾备份/hermes_patches_最新/gpt-loop.sh ~/.hermes/scripts/
+cp /mnt/f/龙虾系统/Seafile/龙虾备份/hermes_patches_最新/feishu.py ~/hermes-agent/gateway/platforms/
+cp /mnt/f/龙虾系统/Seafile/龙虾备份/hermes_patches_最新/weixin.py ~/hermes-agent/gateway/platforms/
+cp /mnt/f/龙虾系统/Seafile/龙虾备份/hermes_patches_最新/gpt-loop.sh ~/.hermes/scripts/
 
 # 安装 Python 依赖
 cd ~/hermes-agent && pip install -r requirements.txt
@@ -41,7 +41,7 @@ pip install websocket-client pg8000  # 额外依赖
 
 ```bash
 # 解密配置包
-gpg --decrypt /mnt/f/Seafile/龙虾备份/configs_最新.tar.gpg | tar xf - -C ~/
+gpg --decrypt /mnt/f/龙虾系统/Seafile/龙虾备份/configs_最新.tar.gpg | tar xf - -C ~/
 
 # 验证 API key 可读
 head -1 ~/.hermes/profiles/main/.env  # 应显示 API_SERVER_KEY=...
@@ -52,7 +52,7 @@ head -1 ~/.hermes/profiles/main/.env  # 应显示 API_SERVER_KEY=...
 ```bash
 # PostgreSQL
 createdb CY_Database
-psql -U hermes_writer CY_Database < /mnt/f/Seafile/龙虾备份/task_ledger_最新.sql
+psql -U hermes_writer CY_Database < /mnt/f/龙虾系统/Seafile/龙虾备份/task_ledger_最新.sql
 
 # Qdrant (如有导出)
 # Qdrant 启动后自动可用，无需恢复（向量可重建）

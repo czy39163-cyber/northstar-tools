@@ -3,7 +3,7 @@
 # Cron: 0 3 * * 0  (每周日凌晨 3:00)
 set -euo pipefail
 
-BACKUP_DIR="/mnt/f/Seafile/龙虾备份"
+BACKUP_DIR="/mnt/f/龙虾系统/Seafile/龙虾备份"
 mkdir -p "$BACKUP_DIR"
 DATE=$(date +%Y%m%d)
 LOG="$BACKUP_DIR/backup_$DATE.log"
