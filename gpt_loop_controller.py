@@ -59,6 +59,58 @@ try:
 except Exception:
     pass
 
+# Feishu candidate skills table cache
+FEISHU_TABLE_BASE = "Vbf2bkCbKaiklDsAaK5crvFOnAg"
+FEISHU_TABLE_ID = "tblB4EK4wwf3Zft0"
+FEISHU_TABLE_CACHE = os.path.expanduser("~/.hermes/gpt_loop/candidate_skills.json")
+
+def _fetch_candidate_skills() -> str:
+    """Fetch candidate skills from Feishu Bitable, cache locally, return summary."""
+    import subprocess
+    try:
+        # Check cache first (< 1 hour old)
+        if os.path.exists(FEISHU_TABLE_CACHE):
+            mtime = os.path.getmtime(FEISHU_TABLE_CACHE)
+            if time.time() - mtime < 3600:
+                with open(FEISHU_TABLE_CACHE) as f:
+                    cached = json.load(f)
+                if cached.get("records"):
+                    return _format_table_summary(cached["records"])
+
+        # Fetch from Feishu
+        url = f"/open-apis/bitable/v1/apps/{FEISHU_TABLE_BASE}/tables/{FEISHU_TABLE_ID}/records?page_size=50"
+        result = subprocess.run(
+            ["lark", "api", "GET", url],
+            capture_output=True, text=True, timeout=30,
+            env={**os.environ, "LARK_CLI_NO_PROXY": "1"}
+        )
+        if result.returncode == 0 and result.stdout:
+            data = json.loads(result.stdout)
+            records = []
+            if "data" in data and "items" in data["data"]:
+                records = data["data"]["items"]
+            # Cache
+            os.makedirs(os.path.dirname(FEISHU_TABLE_CACHE), exist_ok=True)
+            with open(FEISHU_TABLE_CACHE, "w") as f:
+                json.dump({"records": records, "updated": _now_iso()}, f)
+            return _format_table_summary(records)
+    except Exception as e:
+        _log("table_fetch_error", error=str(e))
+    return ""
+
+def _format_table_summary(records: list) -> str:
+    """Format table records as a compact text summary for DeepSeek."""
+    lines = [f"## 候选技能清单 ({len(records)} 条)\n"]
+    for r in records:
+        f = r.get("fields", {})
+        name = f.get("名称", "?")
+        stars = f.get("推荐指数", "?")
+        status = f.get("状态", "?")
+        desc = (f.get("一句话价值", "") or f.get("描述", ""))[:80]
+        record_id = r.get("record_id", "")
+        lines.append(f"- {name} | ⭐{stars} | {status} | {desc} | id:{record_id[-8:]}")
+    return "\n".join(lines)
+
 POLL_INTERVAL = 3  # seconds between Bridge polls
 LOOP_SLEEP = 1     # seconds between rounds
 MAX_ROUNDS = 50
@@ -546,13 +598,21 @@ def cmd_start(task_desc: str):
     _save_state(state)
     _log("started", task_id=tid, task=task_desc)
 
-    # Send initial prompt to GPT via Bridge — use the protocol format GPT knows
+    # Pre-fetch candidate skills table if relevant (avoids slow MAIN lark API calls)
+    table_data = ""
+    if any(kw in task_desc for kw in ["候选技能", "飞书多维表格", "五星", "技能清单"]):
+        table_data = _fetch_candidate_skills()
+        _log("table_cache", length=len(table_data))
+
     initial_prompt = (
         f"## TASK ##\n"
         f"{task_desc}\n\n"
+        f"{table_data}\n"
         f"## INSTRUCTIONS ##\n"
         f"Guide MAIN step by step. Each step: @MAIN: <instruction>\n"
         f"MAIN executes and reports back. Then decide next step.\n"
+        f"The table data above is pre-loaded — do NOT ask MAIN to re-read it.\n"
+        f"Skip data gathering. Go directly to selecting and installing.\n"
         f"When done, output ##TASK_DONE##.\n\n"
         f"Be concise. One step at a time."
     )
