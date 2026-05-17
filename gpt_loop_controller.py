@@ -50,6 +50,15 @@ CLAUDE_API_URL = os.getenv("ANTHROPIC_BASE_URL", "https://api.deepseek.com/anthr
 CLAUDE_API_KEY = os.getenv("ANTHROPIC_AUTH_TOKEN", "")
 CLAUDE_MODEL = os.getenv("ANTHROPIC_MODEL", "deepseek-v4-pro[1m]")
 
+# Feishu webhook for progress reporting
+FEISHU_WEBHOOK_FILE = os.path.expanduser("~/.hermes/gpt_loop/feishu_webhook.txt")
+FEISHU_WEBHOOK_URL = ""
+try:
+    with open(FEISHU_WEBHOOK_FILE) as f:
+        FEISHU_WEBHOOK_URL = f.read().strip()
+except Exception:
+    pass
+
 POLL_INTERVAL = 3  # seconds between Bridge polls
 LOOP_SLEEP = 1     # seconds between rounds
 MAX_ROUNDS = 50
@@ -206,7 +215,9 @@ def _claude_send_and_receive(prompt: str) -> str:
         "CRITICAL RULES:\n"
         "- Make decisions with data you already have. Do NOT request repeated data display.\n"
         "- At most 2 rounds for information gathering, then DECIDE and ACT.\n"
-        "- If MAIN reports tool limit reached, re-issue the SAME instruction next round (MAIN will continue).\n"
+        "- Before installing ANYTHING, first check if already installed (ask MAIN: 'check if X is installed').\n"
+        "- NEVER re-clone, re-install, or re-download something that already exists.\n"
+        "- If MAIN reports tool limit reached, re-issue the SAME instruction next round.\n"
         "- When all subtasks complete, output ##TASK_DONE## immediately."
     )
     payload = json.dumps({
@@ -378,6 +389,18 @@ def _cdp_check_response() -> list:
         _log("cdp_response_captured", length=len(text))
     except: pass
     return [{"text": text, "ts": time.time()}]
+
+def _feishu_progress(text: str):
+    """Post progress to Feishu via webhook."""
+    if not FEISHU_WEBHOOK_URL:
+        return
+    try:
+        payload = json.dumps({"msg_type": "text", "content": {"text": text}}).encode()
+        req = Request(FEISHU_WEBHOOK_URL, data=payload,
+            headers={"Content-Type": "application/json"}, method="POST")
+        urlopen(req, timeout=10)
+    except Exception:
+        pass
 
 def _bridge_queue_only(text: str, sender: str = "gpt_loop", chat_id: str = "gpt_loop") -> dict:
     """Queue a message to Bridge /send WITHOUT CDP injection (for quiet reminders)."""
@@ -630,6 +653,12 @@ def _run_loop(state: dict, api_key: str):
             if main_result.get("success"):
                 state["completed_steps"].append(f"Round {round_num}: {instruction[:60]}...")
                 _log("main_result", round=round_num, text=main_result['content'][:300])
+                # Feishu progress
+                _feishu_progress(
+                    f"🔵 R{round_num} 完成\n\n"
+                    f"DeepSeek 指令: {instruction[:150]}\n\n"
+                    f"MAIN 结果: {main_result['content'][:200]}"
+                )
                 # Feishu progress: every round
                 _feishu_post(api_key, f"🔵 R{round_num} 完成\n指令: {instruction[:100]}\n结果: {main_result['content'][:150]}")
                 prompt = (
@@ -700,9 +729,14 @@ def _finalize_done(state: dict, reason: str, api_key: str = ""):
         pass
     print(f"\n[controller] 报告已生成: {report_path}")
 
-    # Notify Feishu
-    if api_key:
-        _feishu_post(api_key, summary)
+    # Notify Feishu via webhook
+    _feishu_progress(
+        f"✅ 任务完成\n\n"
+        f"任务: {task}\n"
+        f"轮次: {state['round']}\n"
+        f"步骤: {len(steps)} 项\n\n"
+        f"报告: python3 ... report"
+    )
 
 
 def cmd_pause():
