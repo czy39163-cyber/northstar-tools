@@ -64,11 +64,10 @@ FEISHU_TABLE_BASE = "Vbf2bkCbKaiklDsAaK5crvFOnAg"
 FEISHU_TABLE_ID = "tblB4EK4wwf3Zft0"
 FEISHU_TABLE_CACHE = os.path.expanduser("~/.hermes/gpt_loop/candidate_skills.json")
 
-def _fetch_candidate_skills() -> str:
-    """Fetch candidate skills from Feishu Bitable, cache locally, return summary."""
-    import subprocess
+def _fetch_candidate_skills(api_key: str) -> str:
+    """Fetch candidate skills via MAIN API (one slow call, cached 1 hour)."""
     try:
-        # Check cache first (< 1 hour old)
+        # Check cache first
         if os.path.exists(FEISHU_TABLE_CACHE):
             mtime = os.path.getmtime(FEISHU_TABLE_CACHE)
             if time.time() - mtime < 3600:
@@ -77,26 +76,37 @@ def _fetch_candidate_skills() -> str:
                 if cached.get("records"):
                     return _format_table_summary(cached["records"])
 
-        # Fetch from Feishu
-        url = f"/open-apis/bitable/v1/apps/{FEISHU_TABLE_BASE}/tables/{FEISHU_TABLE_ID}/records?page_size=50"
-        result = subprocess.run(
-            ["lark", "api", "GET", url],
-            capture_output=True, text=True, timeout=30,
-            env={**os.environ, "LARK_CLI_NO_PROXY": "1"}
-        )
-        if result.returncode == 0 and result.stdout:
-            data = json.loads(result.stdout)
-            records = []
-            if "data" in data and "items" in data["data"]:
-                records = data["data"]["items"]
-            # Cache
-            os.makedirs(os.path.dirname(FEISHU_TABLE_CACHE), exist_ok=True)
-            with open(FEISHU_TABLE_CACHE, "w") as f:
-                json.dump({"records": records, "updated": _now_iso()}, f)
-            return _format_table_summary(records)
+        # Call MAIN API to read the table
+        result = _call_main_api(api_key,
+            "读取飞书多维表格「候选技能清单」的全部记录。base_token=Vbf2bkCbKaiklDsAaK5crvFOnAg，table_id=tblB4EK4wwf3Zft0。"
+            "只读，不要修改。以紧凑格式列出：名称、推荐指数、状态、描述、record_id。")
+        if result.get("success"):
+            # Parse MAIN's response into records
+            text = result.get("content", "")
+            records = _parse_table_from_text(text)
+            if records:
+                os.makedirs(os.path.dirname(FEISHU_TABLE_CACHE), exist_ok=True)
+                with open(FEISHU_TABLE_CACHE, "w") as f:
+                    json.dump({"records": records, "updated": _now_iso()}, f)
+                return _format_table_summary(records)
     except Exception as e:
         _log("table_fetch_error", error=str(e))
     return ""
+
+def _parse_table_from_text(text: str) -> list:
+    """Parse MAIN's table response into records list."""
+    records = []
+    for line in text.split("\n"):
+        if "|" in line and "名称" not in line:
+            parts = [p.strip() for p in line.split("|")]
+            if len(parts) >= 3 and parts[0]:
+                records.append({"fields": {
+                    "名称": parts[0] if len(parts) > 0 else "",
+                    "推荐指数": parts[1] if len(parts) > 1 else "",
+                    "状态": parts[2] if len(parts) > 2 else "",
+                    "一句话价值": parts[3] if len(parts) > 3 else "",
+                }, "record_id": parts[-1] if len(parts) > 4 else ""})
+    return records
 
 def _format_table_summary(records: list) -> str:
     """Format table records as a compact text summary for DeepSeek."""
@@ -601,7 +611,7 @@ def cmd_start(task_desc: str):
     # Pre-fetch candidate skills table if relevant (avoids slow MAIN lark API calls)
     table_data = ""
     if any(kw in task_desc for kw in ["候选技能", "飞书多维表格", "五星", "技能清单"]):
-        table_data = _fetch_candidate_skills()
+        table_data = _fetch_candidate_skills(api_key)
         _log("table_cache", length=len(table_data))
 
     initial_prompt = (
