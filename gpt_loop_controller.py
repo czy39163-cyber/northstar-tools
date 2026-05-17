@@ -608,16 +608,23 @@ def cmd_start(task_desc: str):
     _save_state(state)
     _log("started", task_id=tid, task=task_desc)
 
-    # Pre-fetch candidate skills table if relevant (avoids slow MAIN lark API calls)
-    table_data = ""
+    # Pre-fetch table if task is about candidate skills
+    table_hint = ""
     if any(kw in task_desc for kw in ["候选技能", "飞书多维表格", "五星", "技能清单"]):
-        table_data = _fetch_candidate_skills(api_key)
-        _log("table_cache", length=len(table_data))
+        table_hint = (
+            f"## DATA ACCESS ##\n"
+            f"The candidate skills table is at Feishu Bitable. "
+            f"Your FIRST instruction MUST be: @MAIN: read all records from the candidate skills table "
+            f"(base={FEISHU_TABLE_BASE}, table={FEISHU_TABLE_ID}). "
+            f"List all items with name, stars, status, description, record_id in compact text.\n"
+            f"After getting the data, IMMEDIATELY select the best project and install it. "
+            f"Do NOT request more data views — one read is enough.\n\n"
+        )
 
     initial_prompt = (
         f"## TASK ##\n"
         f"{task_desc}\n\n"
-        f"{table_data}\n"
+        f"{table_hint}"
         f"## INSTRUCTIONS ##\n"
         f"Guide MAIN step by step. Each step: @MAIN: <instruction>\n"
         f"MAIN executes and reports back. Then decide next step.\n"
