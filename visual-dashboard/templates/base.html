@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦞 Hermes 治理仪表盘</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-card: #161b22;
+            --bg-hover: #1c2333;
+            --border: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #484f58;
+            --green: #3fb950;
+            --red: #f85149;
+            --yellow: #d29922;
+            --blue: #58a6ff;
+            --purple: #bc8cff;
+            --orange: #d4760a;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+        .header h1 {
+            font-size: 22px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 400;
+        }
+        .header-time {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        /* Grid */
+        .grid {
+            display: grid;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .grid-2 { grid-template-columns: 1fr 1fr; }
+        .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .grid-4 { grid-template-columns: repeat(4, 1fr); }
+        .grid-main-right { grid-template-columns: 1.5fr 1fr; }
+
+        /* Card */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            transition: border-color 0.2s;
+        }
+        .card:hover { border-color: #484f58; }
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .card-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Agent Status */
+        .agent-list { display: flex; flex-direction: column; gap: 8px; }
+        .agent-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border-radius: 6px;
+            background: var(--bg-primary);
+            border: 1px solid transparent;
+        }
+        .agent-row:hover { border-color: var(--border); }
+        .agent-name {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        .agent-name .emoji { font-size: 16px; }
+        .agent-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .status-dot.online { background: var(--green); box-shadow: 0 0 6px var(--green); }
+        .status-dot.warning { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
+        .status-dot.offline { background: var(--red); box-shadow: 0 0 6px var(--red); }
+        .status-dot.non-resident { background: var(--text-muted); }
+        .status-label.online { color: var(--green); }
+        .status-label.warning { color: var(--yellow); }
+        .status-label.offline { color: var(--red); }
+        .status-label.non-resident { color: var(--text-muted); }
+        .agent-errors {
+            color: var(--red);
+            font-size: 12px;
+        }
+        .agent-detail {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Stats */
+        .stat-number {
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        .stat-number.green { color: var(--green); }
+        .stat-number.yellow { color: var(--yellow); }
+        .stat-number.red { color: var(--red); }
+        .stat-number.blue { color: var(--blue); }
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* Task list */
+        .task-list { list-style: none; }
+        .task-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(48,54,61,0.5);
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        .task-item:last-child { border-bottom: none; }
+        .task-id {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 11px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            min-width: 100px;
+        }
+        .task-title { flex: 1; }
+        .task-status {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+        .task-status.completed { background: rgba(63,185,80,0.15); color: var(--green); }
+        .task-status.in_progress, .task-status.running { background: rgba(88,166,255,0.15); color: var(--blue); }
+        .task-status.pending, .task-status.queued { background: rgba(210,153,34,0.15); color: var(--yellow); }
+        .task-status.failed, .task-status.blocked { background: rgba(248,81,73,0.15); color: var(--red); }
+        .task-status.cancelled { background: rgba(139,148,158,0.15); color: var(--text-secondary); }
+        .task-status.closed { background: rgba(188,140,255,0.15); color: var(--purple); }
+        .task-assignee {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .task-time {
+            font-size: 11px;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        /* Error callout */
+        .error-callout {
+            background: rgba(248,81,73,0.1);
+            border: 1px solid rgba(248,81,73,0.3);
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin: 4px 0;
+            font-size: 12px;
+            color: var(--red);
+        }
+        .error-callout .task-id { color: var(--orange); }
+
+        /* Domain bar */
+        .domain-bars { display: flex; flex-direction: column; gap: 8px; }
+        .domain-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .domain-label {
+            font-size: 13px;
+            width: 60px;
+            text-align: right;
+            color: var(--text-secondary);
+        }
+        .domain-bar-container {
+            flex: 1;
+            height: 20px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+        }
+        .domain-bar-completed {
+            background: var(--green);
+            height: 100%;
+            transition: width 0.3s;
+        }
+        .domain-bar-other {
+            background: var(--blue);
+            height: 100%;
+            transition: width 0.3s;
+        }
+        .domain-bar-failed {
+            background: var(--red);
+            height: 100%;
+            transition: width 0.3s;
+        }
+        .domain-total {
+            font-size: 13px;
+            color: var(--text-primary);
+            width: 30px;
+            text-align: right;
+        }
+
+        /* Event list */
+        .event-list { display: flex; flex-direction: column; gap: 4px; }
+        .event-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 13px;
+        }
+        .event-type {
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(88,166,255,0.1);
+            color: var(--blue);
+            font-size: 11px;
+        }
+        .event-count {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .grid-2, .grid-3, .grid-4, .grid-main-right { grid-template-columns: 1fr; }
+            .header { flex-direction: column; align-items: flex-start; gap: 8px; }
+        }
+
+        /* Summary row */
+        .summary-row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .summary-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🦞 Hermes 治理仪表盘 <span class="subtitle">v1.0</span></h1>
+            <span class="header-time">{{ now.strftime('%Y-%m-%d %H:%M') }}</span>
+        </header>
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

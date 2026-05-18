@@ -127,7 +127,7 @@ MAX_ROUNDS = 50
 COMPACT_THRESHOLD = 10
 RECENT_ROUNDS_KEEP = 3
 MAX_FORMAT_ERRORS = 3
-MAIN_API_TIMEOUT = 300
+MAIN_API_TIMEOUT = 600
 RETRY_COUNT = 1     # retries on MAIN API failure
 
 DEFAULT_STATE = {
@@ -674,8 +674,14 @@ def _run_loop(state: dict, api_key: str):
                 response = _claude_send_and_receive(prompt)
             except Exception as e:
                 _log("claude_error", error=str(e))
-                time.sleep(5)
-                continue
+                if state["consecutive_errors"] < MAX_FORMAT_ERRORS:
+                    state["consecutive_errors"] += 1
+                    time.sleep(10)
+                    continue
+                else:
+                    state["state"] = "paused"
+                    _save_state(state)
+                    return
 
             if not response:
                 time.sleep(2)

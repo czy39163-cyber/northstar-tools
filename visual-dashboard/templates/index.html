@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- 概览卡片 -->
+<div class="grid grid-4">
+    <div class="card">
+        <div class="card-title">📋 任务总计</div>
+        <div class="stat-number blue">{{ task_stats.total }}</div>
+        <div class="stat-label">全部 task_ledger 记录</div>
+    </div>
+    <div class="card">
+        <div class="card-title">📅 今日新增</div>
+        <div class="stat-number {% if task_stats.today > 0 %}green{% else %}blue{% endif %}">{{ task_stats.today }}</div>
+        <div class="stat-label">今日创建的任务</div>
+    </div>
+    <div class="card">
+        <div class="card-title">📊 本周新增</div>
+        <div class="stat-number blue">{{ task_stats.week }}</div>
+        <div class="stat-label">近7天创建的任务</div>
+    </div>
+    <div class="card">
+        <div class="card-title">⚡ 事件/24h</div>
+        <div class="stat-number {% if event_stats.total > 50 %}green{% else %}blue{% endif %}">{{ event_stats.total }}</div>
+        <div class="stat-label">近24h 执行事件</div>
+    </div>
+</div>
+
+<!-- 主内容区域：Agent状态 + Domain统计 -->
+<div class="grid grid-main-right">
+    <!-- Agent 健康状态 -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">🤖 Agent 健康状态</span>
+            <span class="card-subtitle">
+                {% set online_count = agent_health|selectattr('status_class', 'equalto', 'online')|list|length %}
+                {% set total_count = agent_health|length %}
+                {{ online_count }}/{{ total_count }} 在线
+            </span>
+        </div>
+        <div class="agent-list">
+            {% for agent in agent_health %}
+            <div class="agent-row">
+                <div class="agent-name">
+                    <span class="emoji">{{ agent.emoji }}</span>
+                    {{ agent.display }}
+                </div>
+                <div class="agent-status">
+                    <span class="status-dot {{ agent.status_class }}"></span>
+                    <span class="status-label {{ agent.status_class }}">{{ agent.status }}</span>
+                    {% if agent.has_errors %}
+                    <span class="agent-errors">⚠ {{ agent.error_count }}错误</span>
+                    {% endif %}
+                    {% if agent.pid and agent.pid != "N/A" %}
+                    <span class="agent-detail">PID:{{ agent.pid }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Domain 任务分布 -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">📊 Domain 任务分布</span>
+            <span class="card-subtitle">按 agent 域统计</span>
+        </div>
+        <div class="domain-bars">
+            {% for ds in domain_stats %}
+            {% set pct_completed = (ds.statuses.get('completed', 0) / ds.total * 100)|round|int if ds.total > 0 else 0 %}
+            {% set pct_failed = (ds.statuses.get('failed', 0) / ds.total * 100)|round|int if ds.total > 0 else 0 %}
+            {% set pct_other = 100 - pct_completed - pct_failed %}
+            <div class="domain-bar-row">
+                <span class="domain-label">{{ ds.domain }}</span>
+                <div class="domain-bar-container" title="完成: {{ ds.statuses.get('completed', 0) }}, 失败: {{ ds.statuses.get('failed', 0) }}, 其他: {{ ds.total - ds.statuses.get('completed', 0) - ds.statuses.get('failed', 0) }}">
+                    {% if pct_completed > 0 %}
+                    <div class="domain-bar-completed" style="width: {{ pct_completed }}%"></div>
+                    {% endif %}
+                    {% if pct_other > 0 %}
+                    <div class="domain-bar-other" style="width: {{ pct_other }}%"></div>
+                    {% endif %}
+                    {% if pct_failed > 0 %}
+                    <div class="domain-bar-failed" style="width: {{ pct_failed }}%"></div>
+                    {% endif %}
+                </div>
+                <span class="domain-total">{{ ds.total }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- 进行中的任务 + 异常任务 -->
+<div class="grid grid-2">
+    <!-- 进行中的任务 -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">🔄 进行中的任务</span>
+            <span class="card-subtitle">{{ running_tasks|length }} 个</span>
+        </div>
+        {% if running_tasks is mapping and running_tasks.error %}
+        <div class="error-callout">{{ running_tasks.error }}</div>
+        {% elif running_tasks|length == 0 %}
+        <div style="color: var(--text-muted); font-size: 13px; padding: 8px 0;">暂无进行中的任务</div>
+        {% else %}
+        <ul class="task-list">
+            {% for task in running_tasks %}
+            <li class="task-item">
+                <span class="task-id">{{ task.task_id[:20] }}...</span>
+                <span class="task-title">{{ task.title[:50] }}</span>
+                <span class="task-status {{ task.current_status }}">{{ task.current_status }}</span>
+                <span class="task-assignee">{{ task.assigned_to or '-' }}</span>
+                <span class="task-time">{{ time_ago(task.updated_at) }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+
+    <!-- 异常任务 -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">🚨 异常任务</span>
+            <span class="card-subtitle">{{ failed_blocked|length }} 个 (failed/blocked >24h)</span>
+        </div>
+        {% if failed_blocked is mapping and failed_blocked.error %}
+        <div class="error-callout">{{ failed_blocked.error }}</div>
+        {% elif failed_blocked|length == 0 %}
+        <div style="color: var(--text-muted); font-size: 13px; padding: 8px 0;">无异常任务</div>
+        {% else %}
+        <ul class="task-list">
+            {% for task in failed_blocked %}
+            <li class="task-item">
+                <span class="task-id">{{ task.task_id[:20] }}...</span>
+                <span class="task-title">{{ task.title[:40] }}</span>
+                <span class="task-status {{ task.current_status }}">{{ task.current_status }}</span>
+                <span class="task-assignee">{{ task.assigned_to or '-' }}</span>
+                <span class="task-time">{{ time_ago(task.updated_at) }}</span>
+            </li>
+            {% if task.last_error_message %}
+            <div class="error-callout">{{ task.last_error_message[:100] }}</div>
+            {% endif %}
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 最近任务列表 -->
+<div class="grid">
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">📝 最近更新任务</span>
+            <span class="card-subtitle">最新 15 条</span>
+        </div>
+        {% if recent_tasks is mapping and recent_tasks.error %}
+        <div class="error-callout">{{ recent_tasks.error }}</div>
+        {% else %}
+        <ul class="task-list">
+            {% for task in recent_tasks %}
+            <li class="task-item">
+                <span class="task-id">{{ task.task_id[:24] }}...</span>
+                <span class="task-title">{{ task.title[:60] or '(无标题)' }}</span>
+                <span class="task-status {{ task.current_status }}">{{ task.current_status }}</span>
+                <span class="task-assignee">{{ task.assigned_to or task.domain or '-' }}</span>
+                <span class="task-time">{{ time_ago(task.updated_at) }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 底部：事件统计 -->
+<div class="grid grid-2">
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">📈 事件类型分布（24h）</span>
+        </div>
+        {% if event_stats is mapping and event_stats.error %}
+        <div class="error-callout">{{ event_stats.error }}</div>
+        {% elif event_stats.events|length == 0 %}
+        <div style="color: var(--text-muted); font-size: 13px; padding: 8px 0;">近24h 无事件记录</div>
+        {% else %}
+        <div class="event-list">
+            {% for evt in event_stats.events %}
+            <div class="event-row">
+                <span class="event-type">{{ evt.type }}</span>
+                <span class="event-count">{{ evt.count }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">📋 任务状态分布</span>
+        </div>
+        <div class="event-list">
+            {% for s in task_stats.stats %}
+            <div class="event-row">
+                <span class="event-type">{{ s.status }}</span>
+                <span class="event-count">{{ s.count }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- 上次报告信息 -->
+{% if last_report %}
+<div class="grid">
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">📄 最近治理日报</span>
+            <span class="card-subtitle">{{ last_report.date }} | {{ last_report.mode }}</span>
+        </div>
+        <div class="summary-row">
+            <span class="summary-item">🕐 生成时间: {{ last_report.generated_at[:16] if last_report.generated_at else 'N/A' }}</span>
+            <span class="summary-item">📊 报告类型: {{ last_report.report_type }}</span>
+        </div>
+        {% if last_report.agents %}
+        <div style="margin-top: 8px; font-size: 13px; color: var(--text-secondary);">
+            {% for name, info in last_report.agents.items() %}
+            <span style="display: inline-block; margin-right: 16px;">{{ info.display }}: {{ info.status }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% if last_report.failed_pending and last_report.failed_pending|length > 0 %}
+        <div style="margin-top: 8px;">
+            {% for fp in last_report.failed_pending %}
+            <div class="error-callout">待处理: {{ fp.task_id[:20] }} - {{ fp.title[:40] }} ({{ fp.status }})</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
